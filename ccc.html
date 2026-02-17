@@ -46,6 +46,49 @@ button {
   margin: 5px;
   cursor: pointer;
 }
+
+.logout-container {
+  margin-top: 20px;
+}
+
+.initial-logout-btn {
+  width: 200px;
+  background-color: red;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  text-align: center;
+  width: 300px;
+}
+
+.modal-btn-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+.confirm-logout-btn {
+  background-color: red;
+}
+
+.cancel-logout-btn {
+  background-color: green;
+}
 </style>
 </head>
 
@@ -67,6 +110,28 @@ button {
 <br>
 <button onclick="exportToCSV()">⬇ Export to Excel</button>
 <button onclick="markAllAbsent()">Mark Remaining as Absent</button>
+
+<div class="logout-container">
+  <button class="initial-logout-btn" onclick="showConfirmModal()">Log Out</button>
+</div>
+
+<!-- Logout Modal -->
+<div class="modal" id="logoutConfirmationModal">
+  <div class="modal-content">
+    <h3>Are you sure you want to log out?</h3>
+    <div class="modal-btn-group">
+      <button class="confirm-logout-btn" onclick="logout()">Yes, Log Out</button>
+      <button class="cancel-logout-btn" onclick="hideConfirmModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<br>
+<h4>
+<a href="https://quickchart.io/qr-code-api/" target="_blank">
+For new students create your QR code here.
+</a>
+</h4>
 
 <script>
 const students = {
@@ -115,19 +180,20 @@ const students = {
 
 function onScanSuccess(decodedText) {
   let table = document.getElementById("attendanceTable");
+
+  if (!students[decodedText]) {
+    alert("Invalid QR Code!");
+    return;
+  }
+
   let student = students[decodedText];
-  let studentName = student ? student.name : "Unknown Student";
+  let studentName = student.name;
 
   for (let i = 1; i < table.rows.length; i++) {
     if (table.rows[i].cells[0].innerText === studentName) return;
   }
 
   let row = table.insertRow();
-  let nameCell = row.insertCell(0);
-  let dateCell = row.insertCell(1);
-  let timeCell = row.insertCell(2);
-  let statusCell = row.insertCell(3);
-
   let now = new Date();
 
   let presentCutoff = new Date();
@@ -136,7 +202,9 @@ function onScanSuccess(decodedText) {
   let absentCutoff = new Date();
   absentCutoff.setHours(12, 0, 0, 0);
 
+  let statusCell = row.insertCell(3);
   let status = "";
+
   if (now <= presentCutoff) {
     status = "Present";
     statusCell.className = "present";
@@ -148,9 +216,9 @@ function onScanSuccess(decodedText) {
     statusCell.className = "absent";
   }
 
-  nameCell.innerHTML = studentName;
-  dateCell.innerHTML = now.toLocaleDateString();
-  timeCell.innerHTML = now.toLocaleTimeString();
+  row.insertCell(0).innerHTML = studentName;
+  row.insertCell(1).innerHTML = now.toLocaleDateString();
+  row.insertCell(2).innerHTML = now.toLocaleTimeString();
   statusCell.innerHTML = status;
 }
 
@@ -158,188 +226,4 @@ let scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
 scanner.render(onScanSuccess);
 
 function markAllAbsent() {
-  let table = document.getElementById("attendanceTable");
-  let scanned = [];
-
-  for (let i = 1; i < table.rows.length; i++) {
-    scanned.push(table.rows[i].cells[0].innerText);
-  }
-
-  let now = new Date();
-
-  for (let id in students) {
-    let student = students[id];
-    let name = student.name;
-
-    if (!scanned.includes(name)) {
-      let row = table.insertRow();
-      let c1 = row.insertCell(0);
-      let c2 = row.insertCell(1);
-      let c3 = row.insertCell(2);
-      let c4 = row.insertCell(3);
-
-      c1.innerHTML = name;
-      c2.innerHTML = now.toLocaleDateString();
-      c3.innerHTML = "-";
-      c4.innerHTML = "Absent";
-      c4.className = "absent";
-    }
-  }
-}
-
-function exportToCSV() {
-  let table = document.getElementById("attendanceTable");
-  let rows = [];
-
-  for (let i = 1; i < table.rows.length; i++) {
-    let row = [];
-    for (let j = 0; j < table.rows[i].cells.length; j++) {
-      row.push(table.rows[i].cells[j].innerText);
-    }
-
-    let gender = "M";
-    for (let id in students) {
-      if (students[id].name === row[0]) {
-        gender = students[id].gender;
-        break;
-      }
-    }
-    row.push(gender);
-    rows.push(row);
-  }
-
-  rows.sort((a, b) => {
-    if (a[4] === b[4]) return a[0].localeCompare(b[0]);
-    if (a[4] === "M") return -1; 
-    return 1; 
-  });
-
-  let csv = [];
-  csv.push("Student Name,Date,Time,Status"); 
-  rows.forEach(r => csv.push(r.slice(0,4).join(",")));
-
-  let blob = new Blob([csv.join("\n")], { type: "text/csv" });
-  let link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "Attendance.csv";
-  link.click();
-}
-</script>
-<br>
-<style>
-        .logout-container {
-            border-radius: 8px;
-            padding: 2rem;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .initial-logout-btn {
-            width: 28%;
-            padding: 10px;
-            background-color: red;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 1rem;
-            cursor: pointer;
-        }
-        .initial-logout-btn:hover {
-            background-color: Gray;
-        }
-        .cancel-link {
-            display: block;
-            margin-top: 1rem;
-            color: #6c757d;
-            text-decoration: none;
-        }
-        .cancel-link:hover {
-            color: #495057;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            text-align: center;
-            width: 200%;
-            max-width: 200px;
-        }
-        .modal-btn-group {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-        .modal-btn-group button {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-        .confirm-logout-btn {
-            background-color: Red;
-            color: White;
-        }
-        .confirm-logout-btn:hover {
-            background-color: #c82333;
-        }
-        .cancel-logout-btn {
-            background-color: green;
-            color: White;
-        }
-        .cancel-logout-btn:hover {
-            background-color: GRAY;
-        }
-    </style>
-    </head>
-<body>
-    
-    <div class="logout-container">
-        <button class="initial-logout-btn" onclick="showConfirmModal()">Log Out</button>
-    </div>
-
-    <div class="modal" id="logoutConfirmationModal">
-        <div class="modal-content">
-            <h3>Are you sure you want to log out?</h3>
-            <p>You will lose access to your session after logging out.</p>
-            <div class="modal-btn-group">
-
-                <form action="index.html" method="POST" style="margin: 0; flex: 1;">
-                    <button type="submit" class="confirm-logout-btn">Yes, Log Out
-                 Now</button>
-                </form>
-                <button class="cancel-logout-btn" onclick="hideConfirmModal()">No, Stay Logged In</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        
-        function showConfirmModal() {
-            document.getElementById('logoutConfirmationModal').style.display = 'flex';
-        }
-
-        function hideConfirmModal() {
-            document.getElementById('logoutConfirmationModal').style.display = 'none';
-        }
-    </script>
-
- 
-<h4>
-<a href="https://www.google.com/aclk?sa=L&pf=1&ai=DChsSEwjMuuyPp9aSAxUXjbkFHTJ0BPEYACICCAEQABoCdG0&co=1&ase=2&gclid=EAIaIQobChMIzLrsj6fWkgMVF425BR0ydATxEAAYASAAEgLoy_D_BwE&cid=CAASugHkaCHmYudv474JFNQy8R1RteREgzms6l1LGZoiT_605rN76bTsmBEQSoGiF4vssR3ag6NEoyal3yys0Vdl8jd0ApOW10bSb9KcejTYfUIPcCnKE3I_wIR9B4oGXA8gWqQ2dzAbOJGpfLFXHDR2rWOqJ7gsaM4IgDVrmdnAsoEOU6_sPO556Iv6jx6khwN0VuN40O8At63j3HBSnRCq5IoFcPNmQ2FLgxVrRi7VX1gNP6FVGnhuuMVIE_k&cce=2&category=acrcp_v1_32&sig=AOD64_0TryX2fvWaDn6n89KSvDYjVhDT9g&q&nis=4&adurl=https://quickchart.io/qr-code-api/?gad_source%3D1%26gad_campaignid%3D20924226900%26gbraid%3D0AAAAADh8lNgNdf0x60qMQG3Y6BzYS3YWv%26gclid%3DEAIaIQobChMIzLrsj6fWkgMVF425BR0ydATxEAAYASAAEgLoy_D_BwE&ved=2ahUKEwjIt-aPp9aSAxWNqFYBHWtULbgQ0Qx6BAgXEAE"> 
-For new students create your QR code here.</h4>
-</body>
-</html>
+  let table = document.getEleme
