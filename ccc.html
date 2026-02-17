@@ -8,18 +8,22 @@
 
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #eef2ff;
+      font-family:Courier;
+      justify-content:center;
+      align-items:center;
+      background-image: url("logo2.jpg");
+      margin: 0;
+      height: 30vh;
       text-align: center;
-      padding: 20px;
+      background-size: 110vh;
     }
 
-    h2 { color: #1e3a8a; }
+    h2 { color: black; }
 
     #reader {
       width: 300px;
       margin: auto;
-      background: white;
+      background: #FFFFFFFF;
       padding: 10px;
       border-radius: 10px;
     }
@@ -32,7 +36,7 @@
     }
 
     th {
-      background: #4f46e5;
+      background:  #5482e6;
       color: white;
       padding: 10px;
     }
@@ -45,14 +49,14 @@
     tr:nth-child(even) { background: #f1f5f9; }
 
     .present {
-      background: #bbf7d0;
+      background: #2ECC71;
       color: #166534;
       font-weight: bold;
     }
 
     .late {
-      background: #fde68a;
-      color: #92400e;
+      background:darkgoldenrod;
+      color: Yellow;
       font-weight: bold;
     }
 
@@ -64,7 +68,7 @@
 
     button {
       padding: 10px 20px;
-      background: #22c55e;
+      background: GREEN;
       color: white;
       border: none;
       border-radius: 5px;
@@ -72,17 +76,14 @@
       cursor: pointer;
     }
 
-    button:hover { background: #16a34a; }
+    button:hover { background: #2ECC71; }
   </style>
 </head>
 
 <body>
 
-<h2>📸 QR Code Attendance System</h2>
+<h2>QR Attendance System</h2>
 <p>
-  <b>Rules:</b><br>
-  Present ≤ 6:30 AM | Late ≤ 11:59 AM | Absent ≥ 12:00 PM
-</p>
 
 <div id="reader"></div>
 
@@ -208,6 +209,121 @@ function exportToCSV() {
   link.click();
 }
 </script>
+<br>
+<style>
+        .logout-container {
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .initial-logout-btn {
+            width: 28%;
+            padding: 10px;
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .initial-logout-btn:hover {
+            background-color: Gray;
+        }
+        .cancel-link {
+            display: block;
+            margin-top: 1rem;
+            color: #6c757d;
+            text-decoration: none;
+        }
+        .cancel-link:hover {
+            color: #495057;
+        }
 
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            text-align: center;
+            width: 200%;
+            max-width: 200px;
+        }
+        .modal-btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .modal-btn-group button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .confirm-logout-btn {
+            background-color: Red;
+            color: White;
+        }
+        .confirm-logout-btn:hover {
+            background-color: #c82333;
+        }
+        .cancel-logout-btn {
+            background-color: green;
+            color: White;
+        }
+        .cancel-logout-btn:hover {
+            background-color: GRAY;
+        }
+    </style>
+    </head>
+<body>
+    
+    <div class="logout-container">
+        <button class="initial-logout-btn" onclick="showConfirmModal()">Log Out</button>
+    </div>
+
+    <div class="modal" id="logoutConfirmationModal">
+        <div class="modal-content">
+            <h3>Are you sure you want to log out?</h3>
+            <p>You will lose access to your session after logging out.</p>
+            <div class="modal-btn-group">
+
+                <form action="login.html" method="POST" style="margin: 0; flex: 1;">
+                    <button type="submit" class="confirm-logout-btn">Yes, Log Out
+                 Now</button>
+                </form>
+                <button class="cancel-logout-btn" onclick="hideConfirmModal()">No, Stay Logged In</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        
+        function showConfirmModal() {
+            document.getElementById('logoutConfirmationModal').style.display = 'flex';
+        }
+
+        function hideConfirmModal() {
+            document.getElementById('logoutConfirmationModal').style.display = 'none';
+        }
+    </script>
+
+ 
+<h4>
+<a href="https://www.google.com/aclk?sa=L&pf=1&ai=DChsSEwjMuuyPp9aSAxUXjbkFHTJ0BPEYACICCAEQABoCdG0&co=1&ase=2&gclid=EAIaIQobChMIzLrsj6fWkgMVF425BR0ydATxEAAYASAAEgLoy_D_BwE&cid=CAASugHkaCHmYudv474JFNQy8R1RteREgzms6l1LGZoiT_605rN76bTsmBEQSoGiF4vssR3ag6NEoyal3yys0Vdl8jd0ApOW10bSb9KcejTYfUIPcCnKE3I_wIR9B4oGXA8gWqQ2dzAbOJGpfLFXHDR2rWOqJ7gsaM4IgDVrmdnAsoEOU6_sPO556Iv6jx6khwN0VuN40O8At63j3HBSnRCq5IoFcPNmQ2FLgxVrRi7VX1gNP6FVGnhuuMVIE_k&cce=2&category=acrcp_v1_32&sig=AOD64_0TryX2fvWaDn6n89KSvDYjVhDT9g&q&nis=4&adurl=https://quickchart.io/qr-code-api/?gad_source%3D1%26gad_campaignid%3D20924226900%26gbraid%3D0AAAAADh8lNgNdf0x60qMQG3Y6BzYS3YWv%26gclid%3DEAIaIQobChMIzLrsj6fWkgMVF425BR0ydATxEAAYASAAEgLoy_D_BwE&ved=2ahUKEwjIt-aPp9aSAxWNqFYBHWtULbgQ0Qx6BAgXEAE"> 
+For new students create your QR code here.</h4>
 </body>
 </html>
