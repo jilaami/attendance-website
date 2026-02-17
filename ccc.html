@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>QR Attendance System</title>
+
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
@@ -11,12 +12,12 @@ body {
   background-image: url("logo5.jpg");
   margin: 0;
   text-align: center;
-  background-size: cover;
+  background-size: 110vh;
 }
 
 #reader {
   width: 300px;
-  margin: 20px auto;
+  margin: auto;
   background: white;
   padding: 10px;
   border-radius: 10px;
@@ -38,33 +39,12 @@ td { border: 1px solid #ddd; padding: 8px; }
 
 button {
   padding: 10px 20px;
-  margin: 5px;
   background: green;
   color: white;
   border: none;
   border-radius: 5px;
+  margin: 5px;
   cursor: pointer;
-}
-
-.logout-btn { background: red; }
-
-.modal {
-  display: none;
-  position: fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background: rgba(0,0,0,0.5);
-  justify-content:center;
-  align-items:center;
-}
-
-.modal-content {
-  background:white;
-  padding:20px;
-  border-radius:8px;
-  width:250px;
 }
 </style>
 </head>
@@ -77,171 +57,289 @@ button {
 
 <table id="attendanceTable">
 <tr>
-<th>Student Name</th>
-<th>Date</th>
-<th>Time</th>
-<th>Status</th>
+  <th>Student Name</th>
+  <th>Date</th>
+  <th>Time</th>
+  <th>Status</th>
 </tr>
 </table>
 
+<br>
 <button onclick="exportToCSV()">⬇ Export to Excel</button>
 <button onclick="markAllAbsent()">Mark Remaining as Absent</button>
-<button class="logout-btn" onclick="showModal()">Logout</button>
-
-<!-- Logout Modal -->
-<div class="modal" id="logoutModal">
-  <div class="modal-content">
-    <h3>Logout?</h3>
-    <button onclick="logout()">Yes</button>
-    <button onclick="hideModal()">Cancel</button>
-  </div>
-</div>
-
-<br><br>
-<a href="https://quickchart.io/qr-code-api/" target="_blank">
-Create QR Code for New Students
-</a>
 
 <script>
-
-/* ================= STUDENT LIST ================= */
 const students = {
-  "104971140002": { name: "Amoranto Jaz Chine Kenth" },
-  "158542150101": { name: "Angel Geliane Q." },
-  "136473150058": { name: "Arago Chris Justin P." },
-  "158538130309": { name: "Acibal Kc T." }
-  // 👉 Add the rest of your students here
+  "104971140002": { name: "Amoranto Jaz Chine Kenth", gender: "M" },
+  "158542150101": { name: "Angel Geliane Q.", gender: "M" },
+  "136473150058": { name: "Arago Chris Justin P.", gender: "M" },
+  "158528140092": { name: "Ardenia Joshua D.", gender: "M" },
+  "136792140419": { name: "Argente Jayson A.", gender: "M" },
+  "136858140676": { name: "Cajes Vincent T.", gender: "M" },
+  "158528140305": { name: "Capile Raine Allen ST.", gender: "M" },
+  "158538140318": { name: "Corcino Ralfred D.", gender: "M" },
+  "104728150190": { name: "Diaz Jude", gender: "M" },
+  "104762140040": { name: "Estrella Hanson C.", gender: "M" },
+  "104762140085": { name: "Estrella Marc Danniel A.", gender: "M" },
+  "104770140048": { name: "Fajutnao Kenneth B.", gender: "M" },
+  "158528140034": { name: "Francisco Jovelle B.", gender: "M" },
+  "158538114002": { name: "Garcia Raniel I.", gender: "M" },
+  "104769140113": { name: "Hernandez Nico S.", gender: "M" },
+  "105309130326": { name: "Inefable Steven M.", gender: "M" },
+  "158528140035": { name: "Jarapa John Kevin G.", gender: "M" },
+  "105794130044": { name: "Laugo Mark Angelo A.", gender: "M" },
+  "104981130061": { name: "Libiran Warren R.", gender: "M" },
+  "104769140114": { name: "Legaspi Lance Kobe B.", gender: "M" },
+  "136497140260": { name: "Malla Alex Jaz Z.", gender: "M" },
+  "104762140094": { name: "Moreno Marco Angelo D.", gender: "M" },
+  "158528130375": { name: "Orzal John Carl P.", gender: "M" },
+  "158528150272": { name: "Padernal Prince Daryl V.", gender: "M" },
+  "158528140235": { name: "Pedragosa Jomer P.", gender: "M" },
+  "105972140014": { name: "Perez Jerome B.", gender: "M" },
+  "158528140038": { name: "Rivera Cyruz J.", gender: "M" },
+  "104766140347": { name: "Tamayo Daril Miguel B.", gender: "M" },
+
+  "158538130309": { name: "Acibal Kc T.", gender: "F" },
+  "103508140012": { name: "Azarcon Ma. Ashley Dhenize J.", gender: "F" },
+  "127524140010": { name: "Balaba Kate Jannelle G.", gender: "F" },
+  "158542150089": { name: "Batis Rodelyn C.", gender: "F" },
+  "136430150283": { name: "Buluran Mich Anne T.", gender: "F" },
+  "158528140462": { name: "Butor Leticia B.", gender: "F" },
+  "114003140240": { name: "Calumarde Jade Amber B.", gender: "F" },
+  "158528140044": { name: "Derigay Jhelamae P.", gender: "F" },
+  "104770140025": { name: "Guyla Rosalinda M.", gender: "F" },
+  "158528140207": { name: "Rosas Mary Jane L.", gender: "F" },
+  "136808140025": { name: "Turan Kimbay P.", gender: "F" },
+  "104769140174": { name: "Usero Rhian Stephanie Dc.", gender: "F" }
 };
 
-let scannedStudents = new Set();
-
-/* ================= SCAN SUCCESS ================= */
 function onScanSuccess(decodedText) {
-
-  if (!students[decodedText]) {
-    alert("Invalid QR Code!");
-    return;
-  }
-
-  if (scannedStudents.has(decodedText)) {
-    return;
-  }
-
-  scannedStudents.add(decodedText);
-
   let table = document.getElementById("attendanceTable");
-  let row = table.insertRow(-1);
+  let student = students[decodedText];
+  let studentName = student ? student.name : "Unknown Student";
+
+  for (let i = 1; i < table.rows.length; i++) {
+    if (table.rows[i].cells[0].innerText === studentName) return;
+  }
+
+  let row = table.insertRow();
+  let nameCell = row.insertCell(0);
+  let dateCell = row.insertCell(1);
+  let timeCell = row.insertCell(2);
+  let statusCell = row.insertCell(3);
 
   let now = new Date();
+
   let presentCutoff = new Date();
-  presentCutoff.setHours(6,30,0,0);
+  presentCutoff.setHours(6, 30, 0, 0);
 
   let absentCutoff = new Date();
-  absentCutoff.setHours(12,0,0,0);
+  absentCutoff.setHours(12, 0, 0, 0);
 
   let status = "";
-  let statusClass = "";
-
   if (now <= presentCutoff) {
     status = "Present";
-    statusClass = "present";
+    statusCell.className = "present";
   } else if (now < absentCutoff) {
     status = "Late";
-    statusClass = "late";
+    statusCell.className = "late";
   } else {
     status = "Absent";
-    statusClass = "absent";
+    statusCell.className = "absent";
   }
 
-  row.insertCell(0).innerText = students[decodedText].name;
-  row.insertCell(1).innerText = now.toLocaleDateString();
-  row.insertCell(2).innerText = now.toLocaleTimeString();
-
-  let statusCell = row.insertCell(3);
-  statusCell.innerText = status;
-  statusCell.className = statusClass;
+  nameCell.innerHTML = studentName;
+  dateCell.innerHTML = now.toLocaleDateString();
+  timeCell.innerHTML = now.toLocaleTimeString();
+  statusCell.innerHTML = status;
 }
 
-/* ================= INIT SCANNER ================= */
-window.onload = function() {
-  const html5QrCode = new Html5Qrcode("reader");
+let scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+scanner.render(onScanSuccess);
 
-  Html5Qrcode.getCameras().then(devices => {
-    if (devices.length) {
-      html5QrCode.start(
-        devices[0].id,
-        { fps: 10, qrbox: 250 },
-        onScanSuccess
-      );
-    }
-  }).catch(err => {
-    alert("Camera error or permission denied.");
-    console.log(err);
-  });
-};
-
-/* ================= MARK ABSENT ================= */
 function markAllAbsent() {
-
   let table = document.getElementById("attendanceTable");
+  let scanned = [];
+
+  for (let i = 1; i < table.rows.length; i++) {
+    scanned.push(table.rows[i].cells[0].innerText);
+  }
+
   let now = new Date();
 
   for (let id in students) {
-    if (!scannedStudents.has(id)) {
+    let student = students[id];
+    let name = student.name;
 
-      let row = table.insertRow(-1);
+    if (!scanned.includes(name)) {
+      let row = table.insertRow();
+      let c1 = row.insertCell(0);
+      let c2 = row.insertCell(1);
+      let c3 = row.insertCell(2);
+      let c4 = row.insertCell(3);
 
-      row.insertCell(0).innerText = students[id].name;
-      row.insertCell(1).innerText = now.toLocaleDateString();
-      row.insertCell(2).innerText = "-";
-
-      let statusCell = row.insertCell(3);
-      statusCell.innerText = "Absent";
-      statusCell.className = "absent";
-
-      scannedStudents.add(id);
+      c1.innerHTML = name;
+      c2.innerHTML = now.toLocaleDateString();
+      c3.innerHTML = "-";
+      c4.innerHTML = "Absent";
+      c4.className = "absent";
     }
   }
 }
 
-/* ================= EXPORT CSV ================= */
 function exportToCSV() {
-
   let table = document.getElementById("attendanceTable");
-  let csv = [];
+  let rows = [];
 
-  for (let i = 0; i < table.rows.length; i++) {
+  for (let i = 1; i < table.rows.length; i++) {
     let row = [];
     for (let j = 0; j < table.rows[i].cells.length; j++) {
-      row.push('"' + table.rows[i].cells[j].innerText + '"');
+      row.push(table.rows[i].cells[j].innerText);
     }
-    csv.push(row.join(","));
+
+    let gender = "M";
+    for (let id in students) {
+      if (students[id].name === row[0]) {
+        gender = students[id].gender;
+        break;
+      }
+    }
+    row.push(gender);
+    rows.push(row);
   }
 
-  let blob = new Blob([csv.join("\n")], { type: "text/csv;charset=utf-8;" });
+  rows.sort((a, b) => {
+    if (a[4] === b[4]) return a[0].localeCompare(b[0]);
+    if (a[4] === "M") return -1; 
+    return 1; 
+  });
+
+  let csv = [];
+  csv.push("Student Name,Date,Time,Status"); 
+  rows.forEach(r => csv.push(r.slice(0,4).join(",")));
+
+  let blob = new Blob([csv.join("\n")], { type: "text/csv" });
   let link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = "Attendance.csv";
-  document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
 }
-
-/* ================= LOGOUT ================= */
-function showModal() {
-  document.getElementById("logoutModal").style.display = "flex";
-}
-
-function hideModal() {
-  document.getElementById("logoutModal").style.display = "none";
-}
-
-function logout() {
-  sessionStorage.clear();
-  localStorage.clear();
-  window.location.href = "index.html";
-}
-
 </script>
+<br>
+<style>
+        .logout-container {
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .initial-logout-btn {
+            width: 28%;
+            padding: 10px;
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .initial-logout-btn:hover {
+            background-color: Gray;
+        }
+        .cancel-link {
+            display: block;
+            margin-top: 1rem;
+            color: #6c757d;
+            text-decoration: none;
+        }
+        .cancel-link:hover {
+            color: #495057;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            text-align: center;
+            width: 200%;
+            max-width: 200px;
+        }
+        .modal-btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .modal-btn-group button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .confirm-logout-btn {
+            background-color: Red;
+            color: White;
+        }
+        .confirm-logout-btn:hover {
+            background-color: #c82333;
+        }
+        .cancel-logout-btn {
+            background-color: green;
+            color: White;
+        }
+        .cancel-logout-btn:hover {
+            background-color: GRAY;
+        }
+    </style>
+    </head>
+<body>
+    
+    <div class="logout-container">
+        <button class="initial-logout-btn" onclick="showConfirmModal()">Log Out</button>
+    </div>
+
+    <div class="modal" id="logoutConfirmationModal">
+        <div class="modal-content">
+            <h3>Are you sure you want to log out?</h3>
+            <p>You will lose access to your session after logging out.</p>
+            <div class="modal-btn-group">
+
+                <form action="index.html" style="margin: 0; flex: 1;">
+                    <button type="submit" class="confirm-logout-btn">Yes, Log Out
+                 Now</button>
+                </form>
+                <button class="cancel-logout-btn" onclick="hideConfirmModal()">No, Stay Logged In</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        
+        function showConfirmModal() {
+            document.getElementById('logoutConfirmationModal').style.display = 'flex';
+        }
+
+        function hideConfirmModal() {
+            document.getElementById('logoutConfirmationModal').style.display = 'none';
+        }
+    </script>
+
+ 
+<h4>
+<a href="https://www.google.com/aclk?sa=L&pf=1&ai=DChsSEwjMuuyPp9aSAxUXjbkFHTJ0BPEYACICCAEQABoCdG0&co=1&ase=2&gclid=EAIaIQobChMIzLrsj6fWkgMVF425BR0ydATxEAAYASAAEgLoy_D_BwE&cid=CAASugHkaCHmYudv474JFNQy8R1RteREgzms6l1LGZoiT_605rN76bTsmBEQSoGiF4vssR3ag6NEoyal3yys0Vdl8jd0ApOW10bSb9KcejTYfUIPcCnKE3I_wIR9B4oGXA8gWqQ2dzAbOJGpfLFXHDR2rWOqJ7gsaM4IgDVrmdnAsoEOU6_sPO556Iv6jx6khwN0VuN40O8At63j3HBSnRCq5IoFcPNmQ2FLgxVrRi7VX1gNP6FVGnhuuMVIE_k&cce=2&category=acrcp_v1_32&sig=AOD64_0TryX2fvWaDn6n89KSvDYjVhDT9g&q&nis=4&adurl=https://quickchart.io/qr-code-api/?gad_source%3D1%26gad_campaignid%3D20924226900%26gbraid%3D0AAAAADh8lNgNdf0x60qMQG3Y6BzYS3YWv%26gclid%3DEAIaIQobChMIzLrsj6fWkgMVF425BR0ydATxEAAYASAAEgLoy_D_BwE&ved=2ahUKEwjIt-aPp9aSAxWNqFYBHWtULbgQ0Qx6BAgXEAE"> 
+For new students create your QR code here.</h4>
 </body>
 </html>
