@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>QR Attendance System</title>
-
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
@@ -12,12 +11,12 @@ body {
   background-image: url("logo5.jpg");
   margin: 0;
   text-align: center;
-  background-size: 110vh;
+  background-size: cover;
 }
 
 #reader {
   width: 300px;
-  margin: auto;
+  margin: 20px auto;
   background: white;
   padding: 10px;
   border-radius: 10px;
@@ -39,55 +38,33 @@ td { border: 1px solid #ddd; padding: 8px; }
 
 button {
   padding: 10px 20px;
+  margin: 5px;
   background: green;
   color: white;
   border: none;
   border-radius: 5px;
-  margin: 5px;
   cursor: pointer;
 }
 
-.logout-container {
-  margin-top: 20px;
-}
-
-.initial-logout-btn {
-  width: 200px;
-  background-color: red;
-}
+.logout-btn { background: red; }
 
 .modal {
   display: none;
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
   background: rgba(0,0,0,0.5);
-  justify-content: center;
-  align-items: center;
+  justify-content:center;
+  align-items:center;
 }
 
 .modal-content {
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  text-align: center;
-  width: 300px;
-}
-
-.modal-btn-group {
-  display: flex;
-  gap: 10px;
-  margin-top: 1rem;
-}
-
-.confirm-logout-btn {
-  background-color: red;
-}
-
-.cancel-logout-btn {
-  background-color: green;
+  background:white;
+  padding:20px;
+  border-radius:8px;
+  width:250px;
 }
 </style>
 </head>
@@ -100,130 +77,171 @@ button {
 
 <table id="attendanceTable">
 <tr>
-  <th>Student Name</th>
-  <th>Date</th>
-  <th>Time</th>
-  <th>Status</th>
+<th>Student Name</th>
+<th>Date</th>
+<th>Time</th>
+<th>Status</th>
 </tr>
 </table>
 
-<br>
 <button onclick="exportToCSV()">⬇ Export to Excel</button>
 <button onclick="markAllAbsent()">Mark Remaining as Absent</button>
-
-<div class="logout-container">
-  <button class="initial-logout-btn" onclick="showConfirmModal()">Log Out</button>
-</div>
+<button class="logout-btn" onclick="showModal()">Logout</button>
 
 <!-- Logout Modal -->
-<div class="modal" id="logoutConfirmationModal">
+<div class="modal" id="logoutModal">
   <div class="modal-content">
-    <h3>Are you sure you want to log out?</h3>
-    <div class="modal-btn-group">
-      <button class="confirm-logout-btn" onclick="logout()">Yes, Log Out</button>
-      <button class="cancel-logout-btn" onclick="hideConfirmModal()">Cancel</button>
-    </div>
+    <h3>Logout?</h3>
+    <button onclick="logout()">Yes</button>
+    <button onclick="hideModal()">Cancel</button>
   </div>
 </div>
 
-<br>
-<h4>
+<br><br>
 <a href="https://quickchart.io/qr-code-api/" target="_blank">
-For new students create your QR code here.
+Create QR Code for New Students
 </a>
-</h4>
 
 <script>
-const students = {
-  "104971140002": { name: "Amoranto Jaz Chine Kenth", gender: "M" },
-  "158542150101": { name: "Angel Geliane Q.", gender: "M" },
-  "136473150058": { name: "Arago Chris Justin P.", gender: "M" },
-  "158528140092": { name: "Ardenia Joshua D.", gender: "M" },
-  "136792140419": { name: "Argente Jayson A.", gender: "M" },
-  "136858140676": { name: "Cajes Vincent T.", gender: "M" },
-  "158528140305": { name: "Capile Raine Allen ST.", gender: "M" },
-  "158538140318": { name: "Corcino Ralfred D.", gender: "M" },
-  "104728150190": { name: "Diaz Jude", gender: "M" },
-  "104762140040": { name: "Estrella Hanson C.", gender: "M" },
-  "104762140085": { name: "Estrella Marc Danniel A.", gender: "M" },
-  "104770140048": { name: "Fajutnao Kenneth B.", gender: "M" },
-  "158528140034": { name: "Francisco Jovelle B.", gender: "M" },
-  "158538114002": { name: "Garcia Raniel I.", gender: "M" },
-  "104769140113": { name: "Hernandez Nico S.", gender: "M" },
-  "105309130326": { name: "Inefable Steven M.", gender: "M" },
-  "158528140035": { name: "Jarapa John Kevin G.", gender: "M" },
-  "105794130044": { name: "Laugo Mark Angelo A.", gender: "M" },
-  "104981130061": { name: "Libiran Warren R.", gender: "M" },
-  "104769140114": { name: "Legaspi Lance Kobe B.", gender: "M" },
-  "136497140260": { name: "Malla Alex Jaz Z.", gender: "M" },
-  "104762140094": { name: "Moreno Marco Angelo D.", gender: "M" },
-  "158528130375": { name: "Orzal John Carl P.", gender: "M" },
-  "158528150272": { name: "Padernal Prince Daryl V.", gender: "M" },
-  "158528140235": { name: "Pedragosa Jomer P.", gender: "M" },
-  "105972140014": { name: "Perez Jerome B.", gender: "M" },
-  "158528140038": { name: "Rivera Cyruz J.", gender: "M" },
-  "104766140347": { name: "Tamayo Daril Miguel B.", gender: "M" },
 
-  "158538130309": { name: "Acibal Kc T.", gender: "F" },
-  "103508140012": { name: "Azarcon Ma. Ashley Dhenize J.", gender: "F" },
-  "127524140010": { name: "Balaba Kate Jannelle G.", gender: "F" },
-  "158542150089": { name: "Batis Rodelyn C.", gender: "F" },
-  "136430150283": { name: "Buluran Mich Anne T.", gender: "F" },
-  "158528140462": { name: "Butor Leticia B.", gender: "F" },
-  "114003140240": { name: "Calumarde Jade Amber B.", gender: "F" },
-  "158528140044": { name: "Derigay Jhelamae P.", gender: "F" },
-  "104770140025": { name: "Guyla Rosalinda M.", gender: "F" },
-  "158528140207": { name: "Rosas Mary Jane L.", gender: "F" },
-  "136808140025": { name: "Turan Kimbay P.", gender: "F" },
-  "104769140174": { name: "Usero Rhian Stephanie Dc.", gender: "F" }
+/* ================= STUDENT LIST ================= */
+const students = {
+  "104971140002": { name: "Amoranto Jaz Chine Kenth" },
+  "158542150101": { name: "Angel Geliane Q." },
+  "136473150058": { name: "Arago Chris Justin P." },
+  "158538130309": { name: "Acibal Kc T." }
+  // 👉 Add the rest of your students here
 };
 
+let scannedStudents = new Set();
+
+/* ================= SCAN SUCCESS ================= */
 function onScanSuccess(decodedText) {
-  let table = document.getElementById("attendanceTable");
 
   if (!students[decodedText]) {
     alert("Invalid QR Code!");
     return;
   }
 
-  let student = students[decodedText];
-  let studentName = student.name;
-
-  for (let i = 1; i < table.rows.length; i++) {
-    if (table.rows[i].cells[0].innerText === studentName) return;
+  if (scannedStudents.has(decodedText)) {
+    return;
   }
 
-  let row = table.insertRow();
-  let now = new Date();
+  scannedStudents.add(decodedText);
 
+  let table = document.getElementById("attendanceTable");
+  let row = table.insertRow(-1);
+
+  let now = new Date();
   let presentCutoff = new Date();
-  presentCutoff.setHours(6, 30, 0, 0);
+  presentCutoff.setHours(6,30,0,0);
 
   let absentCutoff = new Date();
-  absentCutoff.setHours(12, 0, 0, 0);
+  absentCutoff.setHours(12,0,0,0);
 
-  let statusCell = row.insertCell(3);
   let status = "";
+  let statusClass = "";
 
   if (now <= presentCutoff) {
     status = "Present";
-    statusCell.className = "present";
+    statusClass = "present";
   } else if (now < absentCutoff) {
     status = "Late";
-    statusCell.className = "late";
+    statusClass = "late";
   } else {
     status = "Absent";
-    statusCell.className = "absent";
+    statusClass = "absent";
   }
 
-  row.insertCell(0).innerHTML = studentName;
-  row.insertCell(1).innerHTML = now.toLocaleDateString();
-  row.insertCell(2).innerHTML = now.toLocaleTimeString();
-  statusCell.innerHTML = status;
+  row.insertCell(0).innerText = students[decodedText].name;
+  row.insertCell(1).innerText = now.toLocaleDateString();
+  row.insertCell(2).innerText = now.toLocaleTimeString();
+
+  let statusCell = row.insertCell(3);
+  statusCell.innerText = status;
+  statusCell.className = statusClass;
 }
 
-let scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-scanner.render(onScanSuccess);
+/* ================= INIT SCANNER ================= */
+window.onload = function() {
+  const html5QrCode = new Html5Qrcode("reader");
 
+  Html5Qrcode.getCameras().then(devices => {
+    if (devices.length) {
+      html5QrCode.start(
+        devices[0].id,
+        { fps: 10, qrbox: 250 },
+        onScanSuccess
+      );
+    }
+  }).catch(err => {
+    alert("Camera error or permission denied.");
+    console.log(err);
+  });
+};
+
+/* ================= MARK ABSENT ================= */
 function markAllAbsent() {
-  let table = document.getEleme
+
+  let table = document.getElementById("attendanceTable");
+  let now = new Date();
+
+  for (let id in students) {
+    if (!scannedStudents.has(id)) {
+
+      let row = table.insertRow(-1);
+
+      row.insertCell(0).innerText = students[id].name;
+      row.insertCell(1).innerText = now.toLocaleDateString();
+      row.insertCell(2).innerText = "-";
+
+      let statusCell = row.insertCell(3);
+      statusCell.innerText = "Absent";
+      statusCell.className = "absent";
+
+      scannedStudents.add(id);
+    }
+  }
+}
+
+/* ================= EXPORT CSV ================= */
+function exportToCSV() {
+
+  let table = document.getElementById("attendanceTable");
+  let csv = [];
+
+  for (let i = 0; i < table.rows.length; i++) {
+    let row = [];
+    for (let j = 0; j < table.rows[i].cells.length; j++) {
+      row.push('"' + table.rows[i].cells[j].innerText + '"');
+    }
+    csv.push(row.join(","));
+  }
+
+  let blob = new Blob([csv.join("\n")], { type: "text/csv;charset=utf-8;" });
+  let link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "Attendance.csv";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+/* ================= LOGOUT ================= */
+function showModal() {
+  document.getElementById("logoutModal").style.display = "flex";
+}
+
+function hideModal() {
+  document.getElementById("logoutModal").style.display = "none";
+}
+
+function logout() {
+  sessionStorage.clear();
+  localStorage.clear();
+  window.location.href = "index.html";
+}
+
+</script>
+</body>
+</html>
