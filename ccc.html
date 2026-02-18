@@ -88,7 +88,7 @@ function beepSuccess(){
 function beepError(){
   let ctx=new (window.AudioContext||window.webkitAudioContext)();
   let o=ctx.createOscillator();
-  o.frequency.value=300;o.connect(ctx.destination);o.start();
+  o.frequency.value=900;o.connect(ctx.destination);o.start();
   setTimeout(()=>o.stop(),250);
 }
 
