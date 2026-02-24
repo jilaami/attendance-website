@@ -80,34 +80,33 @@ button {
 <button onclick="markAllAbsent()">Mark Unscanned as Absent</button>
 <button onclick="exportToCSV()">Export to Excel</button>
 <script>
-let mode="in";
-let scanLocked=false;
-let scanDelay=5000;
+let mode = "in";
+let scanLocked = false;
+let scanDelay = 5000;
 
 function setMode(m){
-  mode=m;
-  document.getElementById("modeLabel").innerText=
-    mode==="in"?"Mode: Time In":"Mode: Time Out";
+  mode = m;
+  document.getElementById("modeLabel").innerText =
+    mode === "in" ? "Mode: Time In" : "Mode: Time Out";
 }
-  
-}
-  function todayKey(){
-  let d=new Date();
-  return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
+
+function todayKey(){
+  let d = new Date();
+  return d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate();
 }
 
 function loadAttendance(){
-  let savedDate=localStorage.getItem("attendance_date");
-  let today=todayKey();
+  let savedDate = localStorage.getItem("attendance_date");
+  let today = todayKey();
 
-  if(savedDate!==today){
+  if(savedDate !== today){
     localStorage.removeItem("attendance_data");
-    localStorage.setItem("attendance_date",today);
+    localStorage.setItem("attendance_date", today);
   }
 
-  let data=localStorage.getItem("attendance_data");
+  let data = localStorage.getItem("attendance_data");
   if(data){
-    document.getElementById("attendanceTable").innerHTML=data;
+    document.getElementById("attendanceTable").innerHTML = data;
   }
 }
 
@@ -116,21 +115,29 @@ function saveAttendance(){
     document.getElementById("attendanceTable").innerHTML);
 }
 
-  let scanLocked = false;
-let scanDelay = 6000;
-
 function beepSuccess(){
-  let ctx=new (window.AudioContext||window.webkitAudioContext)();
-  let o=ctx.createOscillator();
-  o.frequency.value=900;o.connect(ctx.destination);o.start();
-  setTimeout(()=>o.stop(),350);
+  let ctx = new (window.AudioContext || window.webkitAudioContext)();
+  let o = ctx.createOscillator();
+  o.frequency.value = 900;
+  o.connect(ctx.destination);
+  o.start();
+  setTimeout(()=>o.stop(), 350);
 }
+
 function beepError(){
-  let ctx=new (window.AudioContext||window.webkitAudioContext)();
-  let o=ctx.createOscillator();
-  o.frequency.value=900;o.connect(ctx.destination);o.start();
-  setTimeout(()=>o.stop(),350);
+  let ctx = new (window.AudioContext || window.webkitAudioContext)();
+  let o = ctx.createOscillator();
+  o.frequency.value = 400;
+  o.connect(ctx.destination);
+  o.start();
+  setTimeout(()=>o.stop(), 350);
 }
+
+document.addEventListener("DOMContentLoaded", function(){
+  new Html5QrcodeScanner("reader", { fps:10, qrbox:250 }).render(onScanSuccess);
+  loadAttendance();
+});
+</script>
 
 const students={
   "104971140002": { name: "Amoranto Jaz Chine Kenth" },
