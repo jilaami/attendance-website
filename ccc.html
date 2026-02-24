@@ -98,6 +98,30 @@ function beep(freq,duration){
   o.start();
   setTimeout(()=>o.stop(),duration);
 }
+  function todayKey(){
+  let d=new Date();
+  return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
+}
+
+function loadAttendance(){
+  let savedDate=localStorage.getItem("attendance_date");
+  let today=todayKey();
+
+  if(savedDate!==today){
+    localStorage.removeItem("attendance_data");
+    localStorage.setItem("attendance_date",today);
+  }
+
+  let data=localStorage.getItem("attendance_data");
+  if(data){
+    document.getElementById("attendanceTable").innerHTML=data;
+  }
+}
+
+function saveAttendance(){
+  localStorage.setItem("attendance_data",
+    document.getElementById("attendanceTable").innerHTML);
+}
 
 const students={
   "104971140002": { name: "Amoranto Jaz Chine Kenth" },
@@ -198,6 +222,7 @@ function onScanSuccess(decodedText){
         table.rows[i].cells[3].innerText=timeStr;
         msg.innerText="⏰ Time Out Recorded";
         beep(900,150);
+        saveAttendance();
         unlock();
         return;
       }
@@ -217,6 +242,7 @@ function onScanSuccess(decodedText){
 
     msg.innerText="✅ Time In Success ("+status+")";
     beep(900,150);
+    saveAttendance();
   }
   else{
     msg.innerText="⚠ Must Time In first";
@@ -229,9 +255,9 @@ function onScanSuccess(decodedText){
 function unlock(){
   setTimeout(()=>scanLocked=false,scanDelay);
 }
-
-function unlock(){setTimeout(()=>scanLocked=false,scanDelay);}
+  
 new Html5QrcodeScanner("reader",{fps:10,qrbox:250}).render(onScanSuccess);
+  loadAttendance();
 
 function markAllAbsent(){
   let table=document.getElementById("attendanceTable");
@@ -251,6 +277,7 @@ function markAllAbsent(){
       row.cells[4].className="absent";
     }
   }
+  saveAttendance();
 }
 
 function exportToCSV(){
