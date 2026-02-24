@@ -2,19 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>QR Attendance System</title>
+<title>QR Attendance System - Advanced</title>
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
 body {
   font-family: Courier;
-  background-image: url("logo6.jpg");
+  background-image: url("logo5.jpg");
   margin: 0;
   text-align: center;
   background-size: 75vh;
 }
 
-#scanMessage { font-weight: bold; margin: 10px; font-size: 20px; }
+#scanMessage { font-weight: bold; margin: 10px; font-size: 18px; }
 .success { color: green; }
 .error { color: red; }
 
@@ -58,7 +58,12 @@ button {
 
 <body>
 
-<h2>QR Attendance System</h2>
+<h2>QR Attendance System (Advanced)</h2>
+
+<button class="inBtn" onclick="setMode('in')">🟢 Time In</button>
+<button class="outBtn" onclick="setMode('out')">🔵 Time Out</button>
+<h3 id="modeLabel">Mode: Time In</h3>
+
 <div id="scanMessage"></div>
 <div id="reader"></div>
 
@@ -66,33 +71,35 @@ button {
 <tr>
   <th>Student Name</th>
   <th>Date</th>
-  <th>Time</th>
+  <th>Time In</th>
+  <th>Time Out</th>
   <th>Status</th>
 </tr>
 </table>
 
-<br>
-<button onclick="exportToCSV()">⬇ Export to Excel</button>
-<button onclick="markAllAbsent()">Mark Remaining as Absent</button>
-
+<button onclick="markAllAbsent()">Mark Unscanned as Absent</button>
+<button onclick="exportToCSV()">Export to Excel</button>
 <script>
-let scanLocked = false;
-let scanDelay = 6000;
+let mode="in";
+let scanLocked=false;
+let scanDelay=5000;
 
-function beepSuccess(){
-  let ctx=new (window.AudioContext||window.webkitAudioContext)();
-  let o=ctx.createOscillator();
-  o.frequency.value=900;o.connect(ctx.destination);o.start();
-  setTimeout(()=>o.stop(),350);
-}
-function beepError(){
-  let ctx=new (window.AudioContext||window.webkitAudioContext)();
-  let o=ctx.createOscillator();
-  o.frequency.value=900;o.connect(ctx.destination);o.start();
-  setTimeout(()=>o.stop(),350);
+function setMode(m){
+  mode=m;
+  document.getElementById("modeLabel").innerText=
+    mode==="in"?"Mode: Time In":"Mode: Time Out";
 }
 
-const students = {
+function beep(freq,duration){
+  let ctx=new(window.AudioContext||window.webkitAudioContext)();
+  let o=ctx.createOscillator();
+  o.frequency.value=freq;
+  o.connect(ctx.destination);
+  o.start();
+  setTimeout(()=>o.stop(),duration);
+}
+
+const students={
   "104971140002": { name: "Amoranto Jaz Chine Kenth" },
   "158542150101": { name: "Angel Geliane Q." },
   "136473150058": { name: "Arago Chris Justin P." },
@@ -106,7 +113,7 @@ const students = {
   "104762140085": { name: "Estrella Marc Danniel A." },
   "104770140048": { name: "Fajutnao Kenneth B." },
   "158528140034": { name: "Francisco Jovelle B." },
-  "158538140027": { name: "Garcia Raniel I." },
+  "158538114002": { name: "Garcia Raniel I." },
   "104769140113": { name: "Hernandez Nico S." },
   "105309130326": { name: "Inefable Steven M." },
   "158528140035": { name: "Jarapa John Kevin G." },
@@ -128,21 +135,23 @@ const students = {
   "158542150089": { name: "Batis Rodelyn C." },
   "136430150283": { name: "Buluran Mich Anne T." },
   "158528140462": { name: "Butor Leticia B." },
-  "114003140249": { name: "Calumarde Jade Amber B." },
+  "114003140240": { name: "Calumarde Jade Amber B." },
   "158528140044": { name: "Derigay Jhelamae P." },
-  "104770140106": { name: "Guyla Rosalinda M." },
+  "104770140025": { name: "Guyla Rosalinda M." },
   "158528140207": { name: "Rosas Mary Jane L." },
   "136808140025": { name: "Turan Kimbay P." },
   "104769140174": { name: "Usero Rhian Stephanie Dc." }
 };
 
-
 function getStatus(now){
-  let presentCutoff=new Date(); presentCutoff.setHours(6,30,0,0);
-  let absentCutoff=new Date(); absentCutoff.setHours(12,0,0,0);
+  let presentCutoff=new Date();
+  presentCutoff.setHours(6,30,0,0);
 
-  if(now<=presentCutoff) return "Present";
-  if(now<absentCutoff) return "Late";
+  let absentCutoff=new Date();
+  absentCutoff.setHours(12,0,0,0);
+
+  if(now<=presentCutoff)return "Present";
+  if(now<absentCutoff)return "Late";
   return "Absent";
 }
 
@@ -150,40 +159,75 @@ function onScanSuccess(decodedText){
   if(scanLocked)return;
   scanLocked=true;
 
-  let table=document.getElementById("attendanceTable");
   let msg=document.getElementById("scanMessage");
+  let table=document.getElementById("attendanceTable");
   let student=students[decodedText];
 
   if(!student){
     msg.innerText="❌ Unknown QR";
     msg.className="error";
-    beepError(); unlock(); return;
+    beep(300,200);
+    unlock();
+    return;
   }
 
   let name=student.name;
+  let now=new Date();
+  let dateStr=now.toLocaleDateString();
+  let timeStr=now.toLocaleTimeString();
+
 
   for(let i=1;i<table.rows.length;i++){
     if(table.rows[i].cells[0].innerText===name){
-      msg.innerText="⚠ Already scanned: "+name;
-      msg.className="error";
-      beepError(); unlock(); return;
+
+      if(mode==="in"){
+        msg.innerText="⚠ Already Timed In";
+        beep(300,200);
+        unlock();
+        return;
+      }
+
+      if(mode==="out"){
+        if(table.rows[i].cells[3].innerText!==""){
+          msg.innerText="⚠ Already Timed Out";
+          beep(300,200);
+          unlock();
+          return;
+        }
+
+        table.rows[i].cells[3].innerText=timeStr;
+        msg.innerText="⏰ Time Out Recorded";
+        beep(900,150);
+        unlock();
+        return;
+      }
     }
   }
 
-  let now=new Date();
-  let status=getStatus(now);
+  if(mode==="in"){
+    let status=getStatus(now);
 
-  let row=table.insertRow();
-  row.insertCell(0).innerText=name;
-  row.insertCell(1).innerText=now.toLocaleDateString();
-  row.insertCell(2).innerText=now.toLocaleTimeString();
-  row.insertCell(3).innerText=status;
-  row.cells[3].className=status.toLowerCase();
+    let row=table.insertRow();
+    row.insertCell(0).innerText=name;
+    row.insertCell(1).innerText=dateStr;
+    row.insertCell(2).innerText=timeStr;
+    row.insertCell(3).innerText="";
+    row.insertCell(4).innerText=status;
+    row.cells[4].className=status.toLowerCase();
 
-  msg.innerText="✅ "+name+" ("+status+")";
-  msg.className="success";
-  beepSuccess();
+    msg.innerText="✅ Time In Success ("+status+")";
+    beep(900,150);
+  }
+  else{
+    msg.innerText="⚠ Must Time In first";
+    beep(300,200);
+  }
+
   unlock();
+}
+
+function unlock(){
+  setTimeout(()=>scanLocked=false,scanDelay);
 }
 
 function unlock(){setTimeout(()=>scanLocked=false,scanDelay);}
@@ -193,20 +237,21 @@ function markAllAbsent(){
   let table=document.getElementById("attendanceTable");
   let scanned=[...table.rows].slice(1).map(r=>r.cells[0].innerText);
   let now=new Date();
+  let dateStr=now.toLocaleDateString();
 
   for(let id in students){
     let name=students[id].name;
     if(!scanned.includes(name)){
       let row=table.insertRow();
       row.insertCell(0).innerText=name;
-      row.insertCell(1).innerText=now.toLocaleDateString();
-      row.insertCell(2).innerText="-";
-      row.insertCell(3).innerText="Absent";
-      row.cells[3].className="absent";
+      row.insertCell(1).innerText=dateStr;
+      row.insertCell(2).innerText="";
+      row.insertCell(3).innerText="";
+      row.insertCell(4).innerText="Absent";
+      row.cells[4].className="absent";
     }
   }
 }
-
 
 function exportToCSV(){
   let rows=[...document.querySelectorAll("#attendanceTable tr")];
@@ -217,39 +262,40 @@ function exportToCSV(){
   a.download="Attendance.csv";
   a.click();
 }
+
 </script>
 <style>
         .logout-container {
             border-radius: 8px;
             padding: 2rem;
-            text-align: cen
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .initial-logout-btn {
-            width: 28%;
-            padding: 10px;
-            background-color: red;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 1rem;
-            cursor: pointer;
-        }
-        .initial-logout-btn:hover {
-            background-color: Gray;
-        }
-        .cancel-link {
-            display: block;
-            margin-top: 1rem;
-            color: #6c757d;
-            text-decoration: none;
-        }
-        .cancel-link:hover {
-            color: #495057;
-        }
-
-        .modal {
-            display: none;
+‎            text-align: cen
+‎            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+‎        }
+‎        .initial-logout-btn {
+‎            width: 28%;
+‎            padding: 10px;
+‎            background-color: red;
+‎            color: white;
+‎            border: none;
+‎            border-radius: 4px;
+‎            font-size: 1rem;
+‎            cursor: pointer;
+‎        }
+‎        .initial-logout-btn:hover {
+‎            background-color: Gray;
+‎        }
+‎        .cancel-link {
+‎            display: block;
+‎            margin-top: 1rem;
+‎            color: #6c757d;
+‎            text-decoration: none;
+‎        }
+‎        .cancel-link:hover {
+‎            color: #495057;
+‎        }
+‎
+‎        .modal {
+‎            display: none;
             position: fixed;
             top: 0;
             left: 0;
@@ -263,23 +309,19 @@ function exportToCSV(){
         .modal-content {
             background: white;
             padding: 2rem;
-            border-radius: 8px;
-            text-align: center;
+            border-radius: 8px;            text-align: center;
             width: 200%;
             max-width: 200px;
-        }
-        .modal-btn-group {
+        }        .modal-btn-group {
             display: flex;
-            gap: 1rem;
-            margin-top: 1.5rem;
+            gap: 1rem;            margin-top: 1.5rem;
         }
         .modal-btn-group button {
             flex: 1;
             padding: 10px;
             border: none;
             border-radius: 4px;
-            cursor: pointer;
-            font-size: 1rem;
+            cursor: pointer;            font-size: 1rem;
         }
         .confirm-logout-btn {
             background-color: Red;
@@ -327,9 +369,8 @@ function exportToCSV(){
         function hideConfirmModal() {
             document.getElementById('logoutConfirmationModal').style.display = 'none';
         }
-    </script>
 
- 
+ </script>
 <h4>
 <a href="https://www.google.com/aclk?sa=L&pf=1&ai=DChsSEwjMuuyPp9aSAxUXjbkFHTJ0BPEYACICCAEQABoCdG0&co=1&ase=2&gclid=EAIaIQobChMIzLrsj6fWkgMVF425BR0ydATxEAAYASAAEgLoy_D_BwE&cid=CAASugHkaCHmYudv474JFNQy8R1RteREgzms6l1LGZoiT_605rN76bTsmBEQSoGiF4vssR3ag6NEoyal3yys0Vdl8jd0ApOW10bSb9KcejTYfUIPcCnKE3I_wIR9B4oGXA8gWqQ2dzAbOJGpfLFXHDR2rWOqJ7gsaM4IgDVrmdnAsoEOU6_sPO556Iv6jx6khwN0VuN40O8At63j3HBSnRCq5IoFcPNmQ2FLgxVrRi7VX1gNP6FVGnhuuMVIE_k&cce=2&category=acrcp_v1_32&sig=AOD64_0TryX2fvWaDn6n89KSvDYjVhDT9g&q&nis=4&adurl=https://quickchart.io/qr-code-api/?gad_source%3D1%26gad_campaignid%3D20924226900%26gbraid%3D0AAAAADh8lNgNdf0x60qMQG3Y6BzYS3YWv%26gclid%3DEAIaIQobChMIzLrsj6fWkgMVF425BR0ydATxEAAYASAAEgLoy_D_BwE&ved=2ahUKEwjIt-aPp9aSAxWNqFYBHWtULbgQ0Qx6BAgXEAE"> 
 For new students create your QR code here.</h4>
