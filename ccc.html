@@ -20,10 +20,12 @@ body {
 
 #reader {
   width: 300px;
+  height:300px;
   margin: auto;
   background: white;
   padding: 10px;
   border-radius: 10px;
+  overflow: hidden;
 }
 
 table {
@@ -133,9 +135,13 @@ function beepError(){
   setTimeout(()=>o.stop(), 350);
 }
 
-document.addEventListener("DOMContentLoaded", function(){
-  new Html5QrcodeScanner("reader", { fps:10, qrbox:250 }).render(onScanSuccess);
-  loadAttendance();
+document.addEventListener("DOMContentLoaded", function() {
+  const html5QrcodeScanner = new Html5QrcodeScanner(
+    "reader",
+    { fps: 10, qrbox: 250 },
+    false
+  );
+  html5QrcodeScanner.render(onScanSuccess);
 });
 </script>
 
