@@ -89,14 +89,7 @@ function setMode(m){
   document.getElementById("modeLabel").innerText=
     mode==="in"?"Mode: Time In":"Mode: Time Out";
 }
-
-function beep(freq,duration){
-  let ctx=new(window.AudioContext||window.webkitAudioContext)();
-  let o=ctx.createOscillator();
-  o.frequency.value=freq;
-  o.connect(ctx.destination);
-  o.start();
-  setTimeout(()=>o.stop(),duration);
+  
 }
   function todayKey(){
   let d=new Date();
@@ -121,6 +114,22 @@ function loadAttendance(){
 function saveAttendance(){
   localStorage.setItem("attendance_data",
     document.getElementById("attendanceTable").innerHTML);
+}
+
+  let scanLocked = false;
+let scanDelay = 6000;
+
+function beepSuccess(){
+  let ctx=new (window.AudioContext||window.webkitAudioContext)();
+  let o=ctx.createOscillator();
+  o.frequency.value=900;o.connect(ctx.destination);o.start();
+  setTimeout(()=>o.stop(),350);
+}
+function beepError(){
+  let ctx=new (window.AudioContext||window.webkitAudioContext)();
+  let o=ctx.createOscillator();
+  o.frequency.value=900;o.connect(ctx.destination);o.start();
+  setTimeout(()=>o.stop(),350);
 }
 
 const students={
